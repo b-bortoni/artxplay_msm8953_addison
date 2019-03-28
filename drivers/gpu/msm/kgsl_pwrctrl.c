@@ -29,6 +29,10 @@
 #include "kgsl_trace.h"
 #include <soc/qcom/devfreq_devbw.h>
 
+#ifdef CONFIG_ADRENO_REAL_IDLER
+#include <linux/adreno_real_idler.h>
+#endif
+
 #define KGSL_PWRFLAGS_POWER_ON 0
 #define KGSL_PWRFLAGS_CLK_ON   1
 #define KGSL_PWRFLAGS_AXI_ON   2
@@ -808,9 +812,11 @@ static ssize_t kgsl_pwrctrl_gpuclk_show(struct device *dev,
 		return 0;
 	pwr = &device->pwrctrl;
 
-	if (device->state == KGSL_STATE_SLUMBER)
+#ifdef CONFIG_ADRENO_REAL_IDLER
+	if ((device->state == KGSL_STATE_SLUMBER) && (adreno_idler_active == true))
 		freq = pwr->pwrlevels[pwr->num_pwrlevels - 1].gpu_freq;
 	else
+#endif
 		freq = kgsl_pwrctrl_active_freq(pwr);
 
 	return snprintf(buf, PAGE_SIZE, "%lu\n", freq);
